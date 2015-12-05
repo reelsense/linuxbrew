@@ -9,7 +9,6 @@
 # --skip-setup:    Don't check the local system is setup correctly.
 # --skip-homebrew: Don't check Homebrew's files and tests are all valid.
 # --junit:         Generate a JUnit XML test results file.
-# --email:         Generate an email subject file.
 # --keep-old:      Run brew bottle --keep-old to build new bottles for a single platform.
 # --HEAD:          Run brew install with --HEAD
 # --local:         Ask Homebrew to write verbose logs under ./logs/ and set HOME to ./home/
@@ -34,7 +33,6 @@ require "rexml/cdata"
 require "cmd/tap"
 
 module Homebrew
-  EMAIL_SUBJECT_FILE = "brew-test-bot.#{MacOS.cat}.email.txt"
   BYTES_IN_1_MEGABYTE = 1024*1024
 
   def resolve_test_tap
@@ -336,6 +334,7 @@ module Homebrew
       # Handle formulae arguments being passed on the command-line e.g. `brew test-bot wget fish`.
       elsif @formulae && @formulae.any?
         @name = "#{@formulae.first}-#{diff_end_sha1}"
+        diff_start_sha1 = diff_end_sha1
       # Handle a hash being passed on the command-line e.g. `brew test-bot 1a2b3c`.
       elsif @hash
         test "git", "checkout", @hash
@@ -363,14 +362,6 @@ module Homebrew
         end
       else
         raise "Cannot set @name: invalid command-line arguments!"
-      end
-
-      if ENV["TRAVIS"]
-        puts "name: #{@name}"
-        puts "url: #{@url}"
-        puts "hash: #{@hash}"
-        puts "diff_start_sha1: #{diff_start_sha1}"
-        puts "diff_end_sha1: #{diff_end_sha1}"
       end
 
       @log_root = @brewbot_root + @name
@@ -440,11 +431,6 @@ module Homebrew
       test "brew", "uses", canonical_formula_name
 
       formula = Formulary.factory(canonical_formula_name)
-
-      formula.conflicts.map { |c| Formulary.factory(c.name) }.
-        select(&:installed?).each do |conflict|
-          test "brew", "unlink", conflict.name
-        end
 
       installed_gcc = false
 
@@ -547,13 +533,13 @@ module Homebrew
         test "brew", "postinstall", *changed_dependences
       end
       formula_fetch_options = []
-      formula_fetch_options << "--build-bottle" unless ARGV.include? "--fast"
+      formula_fetch_options << "--build-bottle" if !ARGV.include?("--fast") && !formula.bottle_disabled?
       formula_fetch_options << "--force" if ARGV.include? "--cleanup"
       formula_fetch_options << canonical_formula_name
       test "brew", "fetch", "--retry", *formula_fetch_options
       test "brew", "uninstall", "--force", canonical_formula_name if formula.installed?
       install_args = ["--verbose"]
-      install_args << "--build-bottle" unless ARGV.include? "--fast"
+      install_args << "--build-bottle" if !ARGV.include?("--fast") && !formula.bottle_disabled?
       install_args << "--HEAD" if ARGV.include? "--HEAD"
 
       # Pass --devel or --HEAD to install in the event formulae lack stable. Supports devel-only/head-only.
@@ -572,7 +558,7 @@ module Homebrew
       # Don't care about e.g. bottle failures for dependencies.
       install_passed = false
       run_as_not_developer do
-        if !ARGV.include?("--fast") || formula_bottled
+        if !ARGV.include?("--fast") || formula_bottled || formula.bottle_unneeded?
           test "brew", "install", "--only-dependencies", *install_args unless dependencies.empty?
           test "brew", "install", *install_args
           install_passed = steps.last.passed?
@@ -582,7 +568,7 @@ module Homebrew
       audit_args << "--strict" << "--online" if @added_formulae.include? formula_name
       test "brew", "audit", *audit_args
       if install_passed
-        if formula.stable? && !ARGV.include?("--fast")
+        if formula.stable? && !ARGV.include?("--fast") && !formula.bottle_disabled?
           bottle_args = ["--verbose", "--rb", canonical_formula_name]
           bottle_args << "--keep-old" if ARGV.include? "--keep-old"
           test "brew", "bottle", *bottle_args
@@ -595,6 +581,7 @@ module Homebrew
             bottle_merge_args << "--keep-old" if ARGV.include? "--keep-old"
             test "brew", "bottle", *bottle_merge_args
             test "brew", "uninstall", "--force", canonical_formula_name
+            FileUtils.ln bottle_filename, HOMEBREW_CACHE/bottle_filename, :force => true
             if unchanged_build_dependencies.any?
               test "brew", "uninstall", "--force", *unchanged_build_dependencies
               unchanged_dependencies -= unchanged_build_dependencies
@@ -645,7 +632,7 @@ module Homebrew
       else
         test "brew", "tests", "--no-compat" unless OS.linux?
         readall_args = ["--aliases"]
-        readall_args << "--syntax" if MacOS.version >= :mavericks
+        readall_args << "--syntax" if RUBY_VERSION.split(".").first.to_i >= 2
         test "brew", "readall", *readall_args
         test "brew", "update-test"
       end
@@ -718,7 +705,7 @@ module Homebrew
       changed_formulae_dependents = {}
 
       @formulae.each do |formula|
-        formula_dependencies = Utils.popen_read("brew", "deps", formula).split("\n")
+        formula_dependencies = Utils.popen_read("brew", "deps", "--skip-optional", formula).split("\n")
         unchanged_dependencies = formula_dependencies - @formulae
         changed_dependences = formula_dependencies - unchanged_dependencies
         changed_dependences.each do |changed_formula|
@@ -893,25 +880,17 @@ module Homebrew
 
     if ARGV.include?("--ci-master") || ARGV.include?("--ci-pr") \
        || ARGV.include?("--ci-testing")
-      ARGV << "--cleanup" if ENV["JENKINS_HOME"] || ENV["TRAVIS"]
+      ARGV << "--cleanup" if ENV["JENKINS_HOME"]
       ARGV << "--junit" << "--local"
     end
     if ARGV.include? "--ci-master"
-      ARGV << "--email" << "--fast"
+      ARGV << "--fast"
     end
 
     if ARGV.include? "--local"
       ENV["HOMEBREW_HOME"] = ENV["HOME"] = "#{Dir.pwd}/home"
       mkdir_p ENV["HOME"]
       ENV["HOMEBREW_LOGS"] = "#{Dir.pwd}/logs"
-    end
-
-    if ARGV.include? "--email"
-      File.open EMAIL_SUBJECT_FILE, "w" do |file|
-        # The file should be written at the end but in case we don't get to that
-        # point ensure that we have something valid.
-        file.write "#{MacOS.version}: internal error."
-      end
     end
   end
 
@@ -1000,28 +979,15 @@ module Homebrew
         xml_document.write(xml_file, pretty_print_indent)
       end
     end
-
-    if ARGV.include? "--email"
-      failed_steps = []
-      tests.each do |test|
-        test.steps.each do |step|
-          next if step.passed?
-          failed_steps << step.command_short
-        end
-      end
-
-      if failed_steps.empty?
-        email_subject = ""
-      else
-        email_subject = "#{MacOS.version}: #{failed_steps.join ", "}."
-      end
-
-      File.open EMAIL_SUBJECT_FILE, "w" do |file|
-        file.write email_subject
+  ensure
+    if ARGV.include? "--clean-cache"
+      HOMEBREW_CACHE.children.each(&:rmtree)
+    else
+      Dir.glob("*.bottle*.tar.gz") do |bottle_file|
+        FileUtils.rm_f HOMEBREW_CACHE/bottle_file
       end
     end
-  ensure
-    HOMEBREW_CACHE.children.each(&:rmtree) if ARGV.include? "--clean-cache"
+
     Homebrew.failed = any_errors
   end
 end
