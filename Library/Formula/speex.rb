@@ -13,11 +13,14 @@ class Speex < Formula
     sha256 "c245232af0587e05254cbce4d078f420c5bf79508c0021c2aa72edfdcdc4f8b2" => :mountain_lion
   end
 
+  option :universal
+
   depends_on "pkg-config" => :build
   depends_on "libogg" => :recommended
 
   def install
     ENV.j1
+    ENV.universal_binary if build.universal?
     system "./configure", "--disable-debug", "--disable-dependency-tracking",
                           "--prefix=#{prefix}"
     system "make", "install"

@@ -1,5 +1,3 @@
-require "formula"
-
 class Crunch < Formula
   desc "Wordlist generator"
   homepage "https://sourceforge.net/projects/crunch-wordlist/"
@@ -9,6 +7,9 @@ class Crunch < Formula
   bottle do
     cellar :any_skip_relocation
     revision 1
+    sha256 "84c0c275e63cc5c27fd468587f67ae5f1ab31a3923fe2eda27b4e33477356844" => :el_capitan
+    sha256 "406d94f00713b83bbf41b36453605a5f85f154f88aec9b3ae23e7646ddcc03c1" => :yosemite
+    sha256 "379e5d6a2a8a9baaa9b337f3e702e25ccca6025fd8b49e2685031e67d8ce8666" => :mavericks
   end
 
   def install

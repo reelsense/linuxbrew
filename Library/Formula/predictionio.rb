@@ -4,6 +4,8 @@ class Predictionio < Formula
   url "http://download.prediction.io/PredictionIO-0.9.5.tar.gz"
   sha256 "6af81c03ac5d74fc331ab2248d2cacc752a6c2a54e0a55d63b57f7f17eae2fb0"
 
+  bottle :unneeded
+
   depends_on "elasticsearch"
   depends_on "hadoop"
   depends_on "hbase"

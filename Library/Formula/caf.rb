@@ -9,22 +9,27 @@ class Caf < Formula
 
   bottle do
     cellar :any
+    sha256 "c161ba6878e220bd41ba3b387e04c9af5148a11ca76fda4b12cf90c3ad7f285c" => :el_capitan
+    sha256 "058410d9287e31c1c5bc956749dd88b3756429fddcae9626fa3cf4fb0a482a6d" => :yosemite
+    sha256 "cce3011d963e53ac1fe86e0155d76d6396b676066ddbf0c4aa7f9ea9917abd08" => :mavericks
   end
 
   needs :cxx11
 
   option "with-opencl", "build with support for OpenCL actors"
-  option "without-check", "skip unit tests (not recommended)"
+  option "without-test", "skip unit tests (not recommended)"
+
+  deprecated_option "without-check" => "without-test"
 
   depends_on "cmake" => :build
 
   def install
-    args = %W[./configure --prefix=#{prefix} --no-examples --build-static]
+    args = %W[--prefix=#{prefix} --no-examples --build-static]
     args << "--no-opencl" if build.without? "opencl"
 
-    system *args
+    system "./configure", *args
     system "make"
-    system "make", "test" if build.with? "check"
+    system "make", "test" if build.with? "test"
     system "make", "install"
   end
 
@@ -42,7 +47,8 @@ class Caf < Formula
         return 0;
       }
     EOS
-    system *%W[#{ENV.cxx} -std=c++11 -stdlib=libc++ test.cpp -lcaf_core -o test]
+    system ENV.cxx, "-std=c++11", "-stdlib=libc++", "test.cpp",
+      "-lcaf_core", "-o", "test"
     system "./test"
   end
 end

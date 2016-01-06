@@ -18,6 +18,9 @@ class Emscripten < Formula
   end
 
   bottle do
+    sha256 "96e322f558865c833396f5ca909fb4ddf52a57f50679f9b36bfa38666c5b28c7" => :el_capitan
+    sha256 "46091d97d09b351fc85e3265930e6c6734585cb6ff01fd570bb6c5dbc750d460" => :yosemite
+    sha256 "d8e41f09998f42c014cf636eeb99bbbc91bf9193745181f72ab818391f43be03" => :mavericks
   end
 
   head do
@@ -64,8 +67,8 @@ class Emscripten < Formula
       "--disable-bindings",
     ]
 
-    cd "fastcomp" do
-      system "./configure", *args
+    mkdir "fastcomp/build" do
+      system "../configure", *args
       system "make"
       system "make", "install"
     end

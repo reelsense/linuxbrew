@@ -29,7 +29,6 @@ class Gmp < Formula
     system "./configure", *args
     system "make"
     system "make", "check" unless OS.linux? # Fails without LD_LIBRARY_PATH
-    ENV.deparallelize
     system "make", "install"
   end
 

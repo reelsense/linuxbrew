@@ -22,10 +22,11 @@ class Sdl < Formula
   end
 
   option "with-x11", "Compile with support for X11 video driver"
-  option "with-tests", "Compile and install the tests"
+  option "with-test", "Compile and install the tests"
   option :universal
 
   deprecated_option "with-x11-driver" => "with-x11"
+  deprecated_option "with-tests" => "with-test"
 
   depends_on :x11 => :optional
 
@@ -37,7 +38,7 @@ class Sdl < Formula
     # Fix build against recent libX11; requires regenerating configure script
     patch do
       url "https://hg.libsdl.org/SDL/raw-rev/91ad7b43317a"
-      sha1 "1b35949d9ac360a7e39aac76d1f0a6ad5381b0f4"
+      sha256 "04fa6aaf1ae1043e82d85f367fdb3bea5532e60aa944ce17357030ee93bb856c"
     end
   end
 
@@ -77,7 +78,7 @@ class Sdl < Formula
     # Copy source files needed for Ojective-C support.
     libexec.install Dir["src/main/macosx/*"] if build.stable?
 
-    if build.with? "tests"
+    if build.with? "test"
       ENV.prepend_path "PATH", "#{bin}"
       # This is stupid but necessary. Blurgh. Otherwise, test building fails, even
       # with various flags, prepending & pkg_config_path tinkering.

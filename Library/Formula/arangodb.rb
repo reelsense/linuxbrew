@@ -1,10 +1,16 @@
 class Arangodb < Formula
   desc "Universal open-source database with a flexible data model"
   homepage "https://www.arangodb.com/"
-  url "https://www.arangodb.com/repositories/Source/ArangoDB-2.7.1.tar.gz"
-  sha256 "a0f5cb20bdfa9750f43ee57a559a370a22bfc3f184a9d6d2d30d0bdadf639e12"
+  url "https://www.arangodb.com/repositories/Source/ArangoDB-2.7.3.tar.gz"
+  sha256 "cda5f897dd8f51ad7a7fc2e4b4383bad8e2a378a8114c1531cb8e7e977b620d4"
 
   head "https://github.com/arangodb/arangodb.git", :branch => "unstable"
+
+  bottle do
+    sha256 "f5087d401be687da97cfe53102f2e9b91b41aa10e3b94ca43e1f2af8d793730e" => :el_capitan
+    sha256 "ab24cf95233f50a9909d4e015002b0f86f7ecbf929bdf557711cba60f7b4c5b9" => :yosemite
+    sha256 "ba553d36bc4c67e70b3e7499aea9d219c4c5c26a2ce75d2e904dd97ee937de47" => :mavericks
+  end
 
   depends_on "go" => :build
   depends_on "openssl"
@@ -26,7 +32,6 @@ class Arangodb < Formula
       --disable-dependency-tracking
       --prefix=#{prefix}
       --disable-relative
-      --enable-mruby
       --datadir=#{share}
       --localstatedir=#{var}
     ]

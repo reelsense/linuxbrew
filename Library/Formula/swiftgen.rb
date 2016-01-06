@@ -1,20 +1,20 @@
 class Swiftgen < Formula
   desc "Collection of Swift tools to generate Swift code"
   homepage "https://github.com/AliSoftware/SwiftGen"
-  url "https://github.com/AliSoftware/SwiftGen/archive/0.7.2.tar.gz"
-  sha256 "a3d39da9f53d5e31447191e1c821c5a83b06be92a73ce7973e4f632d1e7dee9e"
+  url "https://github.com/AliSoftware/SwiftGen/archive/0.7.4.tar.gz"
+  sha256 "e1498ce1950f99536ca7ccaa44903f4fafab896b7fd14ea6109b7b6cd311f37a"
   head "https://github.com/AliSoftware/SwiftGen.git"
 
   bottle do
     cellar :any
-    sha256 "800c8f7c729fa0c4a2944ded6dde8814b692841e47d79c7955e5dbdb60dc67c3" => :el_capitan
-    sha256 "7d42236c6d36969bbb7b5ef3ddec6c1bdbace3ddcfa58fcded590be450a89a0a" => :yosemite
+    sha256 "a5d14ec979eea1c36a7b0103f106bc1d7ca2ae5b7b80b934c04aa97eee751ed7" => :el_capitan
+    sha256 "1e0f3414659c088a3828629bbcbfb558cba2f66a5bef5b49d354177e63da2009" => :yosemite
   end
 
   depends_on :xcode => "7.0"
 
   def install
-    rake "install[#{bin},#{lib}]"
+    rake "install[#{bin},#{lib},#{pkgshare}/templates]"
 
     fixtures = %w[
       UnitTests/fixtures/Images.xcassets
@@ -26,14 +26,13 @@ class Swiftgen < Formula
       UnitTests/expected/Strings-File-Defaults.swift.out
       UnitTests/expected/Storyboards-Message-Defaults.swift.out
     ]
-    pkgshare.install fixtures
+    (pkgshare/"fixtures").install fixtures
   end
 
   test do
-    system "#{bin}/swiftgen --version"
+    system bin/"swiftgen", "--version"
 
-    output = shell_output("#{bin}/swiftgen images #{pkgshare}/Images.xcassets").strip
-    assert_equal output, (pkgshare/"Images-File-Defaults.swift.out").read.strip, "swiftgen images failed"
+    fixtures = pkgshare/"fixtures"
 
     output = shell_output("#{bin}/swiftgen images --templatePath #{pkgshare/"templates/images-default.stencil"} #{fixtures}/Images.xcassets").strip
     assert_equal output, (fixtures/"Images-File-Defaults.swift.out").read.strip, "swiftgen images failed"

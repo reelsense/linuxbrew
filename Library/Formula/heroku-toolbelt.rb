@@ -5,6 +5,8 @@ class HerokuToolbelt < Formula
   sha256 "752e74b0ccf87d706a551c451f2e912fa0417397804b5ad5ea2edd9869e6a2f6"
   head "https://github.com/heroku/heroku.git"
 
+  bottle :unneeded
+
   depends_on :ruby => "1.9"
 
   def install

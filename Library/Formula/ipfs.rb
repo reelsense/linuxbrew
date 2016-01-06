@@ -2,10 +2,10 @@ require "language/go"
 
 class Ipfs < Formula
   desc "IPFS is The Permanent Web - A new peer-to-peer hypermedia protocol"
-  homepage "http://ipfs.io/"
+  homepage "https://ipfs.io/"
   url "https://github.com/ipfs/go-ipfs.git",
-    :tag => "v0.3.7",
-    :revision => "ec51450d071e50464c03a84ef1c3fe3ca902d0e1"
+    :tag => "v0.3.9",
+    :revision => "43622bd5eed1f62d53d364dc771bbb500939d9e6"
   head "https://github.com/ipfs/go-ipfs.git"
 
   bottle do
@@ -19,11 +19,6 @@ class Ipfs < Formula
   depends_on "go" => :build
   depends_on "godep" => :build
 
-   go_resource"github.com/tools/godep" do
-    url "https://github.com/tools/godep.git",
-      :revision => "58d90f262c13357d3203e67a33c6f7a9382f9223"
-  end
-
   go_resource "github.com/kr/fs" do
     url "https://github.com/kr/fs.git",
       :revision => "2788f0dbd16903de03cb8186e5c7d97b69ad387b"
@@ -32,7 +27,7 @@ class Ipfs < Formula
   go_resource "golang.org/x/tools" do
     url "https://go.googlesource.com/tools",
       :using => :git,
-      :revision => "b1aed1a596ad02d2aa2eb5c5af431a7ba2f6afc4"
+      :revision => "d02228d1857b9f49cd0252788516ff5584266eb6"
   end
 
   def install

@@ -2,7 +2,7 @@ class Keg
   PREFIX_PLACEHOLDER = "@@HOMEBREW_PREFIX@@".freeze
   CELLAR_PLACEHOLDER = "@@HOMEBREW_CELLAR@@".freeze
 
-  def fix_install_names(options = {})
+  def fix_install_names
     return unless OS.mac?
     mach_o_files.each do |file|
       file.ensure_writable do
@@ -177,17 +177,12 @@ class Keg
   end
 
   def dylib_id_for(file)
+    return nil unless OS.mac?
     # The new dylib ID should have the same basename as the old dylib ID, not
     # the basename of the file itself.
     basename = File.basename(file.dylib_id)
     relative_dirname = file.dirname.relative_path_from(path)
-    shortpath = HOMEBREW_PREFIX.join(relative_dirname, basename)
-
-    if shortpath.exist? && !options[:keg_only]
-      shortpath.to_s
-    else
-      opt_record.join(relative_dirname, basename).to_s
-    end
+    opt_record.join(relative_dirname, basename).to_s
   end
 
   # Matches framework references like `XXX.framework/Versions/YYY/XXX` and

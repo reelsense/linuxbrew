@@ -1,7 +1,7 @@
 class Libevent < Formula
   desc "Asynchronous event library"
   homepage "http://libevent.org"
-  url "https://downloads.sourceforge.net/project/levent/libevent/libevent-2.0/libevent-2.0.22-stable.tar.gz"
+  url "https://github.com/libevent/libevent/releases/download/release-2.0.22-stable/libevent-2.0.22-stable.tar.gz"
   sha256 "71c2c49f0adadacfdbe6332a372c38cf9c8b7895bb73dabeaa53cdcc1d4e1fa3"
 
   bottle do
@@ -33,6 +33,9 @@ class Libevent < Formula
     build 2326
     cause "Undefined symbol '_current_base' reported during linking."
   end
+
+  conflicts_with "pincaster",
+    :because => "both install `event_rpcgen.py` binaries"
 
   def install
     ENV.universal_binary if build.universal?

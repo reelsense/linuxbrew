@@ -3,12 +3,15 @@ require "language/go"
 class Deis < Formula
   desc "Deploy and manage applications on your own servers"
   homepage "http://deis.io"
-  url "https://github.com/deis/deis/archive/v1.10.0.tar.gz"
-  sha256 "afdb0ae576a9c05af2e634a3ac83df9bae99cef17cfd2f1e2c8b7713107e769b"
+  url "https://github.com/deis/deis/archive/v1.11.1.tar.gz"
+  sha256 "0d5434dbcfcbeaf07e071898ee1d2592cde21422c551a6c87e169474123f6d74"
 
   bottle do
     cellar :any_skip_relocation
     revision 1
+    sha256 "c62ccd9efa4f93b290b846942c16df504c8546637d24f038c5f2855bb5b992e8" => :el_capitan
+    sha256 "5e2a430023e6bc4273fc1054303e5e8e84e822ebefafc16ff686ef67db1882cf" => :yosemite
+    sha256 "7e57cf0300d8f31e45129402d9d3137619b2ee34630f4be81a5b33f68229b17d" => :mavericks
   end
 
   depends_on "go" => :build

@@ -29,6 +29,7 @@ class Mariadb < Formula
     :because => "mariadb, mysql, and percona install the same binaries."
   conflicts_with "mysql-connector-c",
     :because => "both install MySQL client libraries"
+  conflicts_with "mytop", :because => "both install `mytop` binaries"
 
   def install
     # Don't hard-code the libtool path. See:
@@ -69,11 +70,7 @@ class Mariadb < Formula
     ]
 
     # disable TokuDB, which is currently not supported on Mac OS X
-    if build.stable?
-      args << "-DWITHOUT_TOKUDB=1"
-    else
-      args << "-DPLUGIN_TOKUDB=NO"
-    end
+    args << "-DPLUGIN_TOKUDB=NO"
 
     args << "-DWITH_UNIT_TESTS=OFF" if build.without? "tests"
 
@@ -84,22 +81,10 @@ class Mariadb < Formula
     args << "-DWITH_READLINE=yes" if build.without? "libedit"
 
     # Compile with ARCHIVE engine enabled if chosen
-    if build.with? "archive-storage-engine"
-      if build.stable?
-        args << "-DWITH_ARCHIVE_STORAGE_ENGINE=1"
-      else
-        args << "-DPLUGIN_ARCHIVE=YES"
-      end
-    end
+    args << "-DPLUGIN_ARCHIVE=YES" if build.with? "archive-storage-engine"
 
     # Compile with BLACKHOLE engine enabled if chosen
-    if build.with? "blackhole-storage-engine"
-      if build.stable?
-        args << "-DWITH_BLACKHOLE_STORAGE_ENGINE=1"
-      else
-        args << "-DPLUGIN_BLACKHOLE=YES"
-      end
-    end
+    args << "-DPLUGIN_BLACKHOLE=YES" if build.with? "blackhole-storage-engine"
 
     # Make universal for binding to universal applications
     if build.universal?
@@ -140,20 +125,18 @@ class Mariadb < Formula
 
     bin.install_symlink prefix/"support-files/mysql.server"
 
-    if build.devel?
-      # Move sourced non-executable out of bin into libexec
-      libexec.mkpath
-      libexec.install "#{bin}/wsrep_sst_common"
-      # Fix up references to wsrep_sst_common
-      %W[
-        wsrep_sst_mysqldump
-        wsrep_sst_rsync
-        wsrep_sst_xtrabackup
-        wsrep_sst_xtrabackup-v2
-      ].each do |f|
-        inreplace "#{bin}/#{f}" do |s|
-          s.gsub!("$(dirname $0)/wsrep_sst_common", "#{libexec}/wsrep_sst_common")
-        end
+    # Move sourced non-executable out of bin into libexec
+    libexec.mkpath
+    libexec.install "#{bin}/wsrep_sst_common"
+    # Fix up references to wsrep_sst_common
+    %W[
+      wsrep_sst_mysqldump
+      wsrep_sst_rsync
+      wsrep_sst_xtrabackup
+      wsrep_sst_xtrabackup-v2
+    ].each do |f|
+      inreplace "#{bin}/#{f}" do |s|
+        s.gsub!("$(dirname $0)/wsrep_sst_common", "#{libexec}/wsrep_sst_common")
       end
     end
   end
