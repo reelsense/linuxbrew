@@ -802,6 +802,7 @@ module Homebrew
       end
 
       def check_for_gettext
+        return unless OS.mac?
         find_relative_paths("lib/libgettextlib.dylib",
                             "lib/libintl.dylib",
                             "include/libintl.h")
@@ -823,6 +824,7 @@ module Homebrew
       end
 
       def check_for_iconv
+        return unless OS.mac?
         unless find_relative_paths("lib/libiconv.dylib", "include/iconv.h").empty?
           if (f = Formulary.factory("libiconv") rescue nil) && f.linked_keg.directory?
             unless f.keg_only? then <<-EOS.undent
@@ -920,6 +922,7 @@ module Homebrew
       end
 
       def check_for_multiple_volumes
+        return unless OS.mac?
         return unless HOMEBREW_CELLAR.exist?
         volumes = Volumes.new
 
@@ -1016,6 +1019,7 @@ module Homebrew
         return if !Utils.git_available? || !(HOMEBREW_REPOSITORY/".git").exist?
 
         origin = Homebrew.git_origin
+        remote = "https://github.com/Homebrew/#{OS::GITHUB_REPOSITORY}.git"
 
         if origin.nil? then <<-EOS.undent
           Missing git origin remote.
@@ -1023,9 +1027,9 @@ module Homebrew
           Without a correctly configured origin, Homebrew won't update
           properly. You can solve this by adding the Homebrew remote:
             cd #{HOMEBREW_REPOSITORY}
-            git remote add origin https://github.com/Homebrew/homebrew.git
+            git remote add origin #{remote}
           EOS
-        elsif origin !~ /(mxcl|Homebrew)\/homebrew(\.git)?$/ then <<-EOS.undent
+        elsif origin !~ /(mxcl|Homebrew)\/(homebrew|linuxbrew)(\.git)?$/ then <<-EOS.undent
           Suspicious git origin remote found.
 
           With a non-standard origin, Homebrew won't pull updates from
@@ -1034,7 +1038,7 @@ module Homebrew
 
           Unless you have compelling reasons, consider setting the
           origin remote to point at the main repository, located at:
-            https://github.com/Homebrew/homebrew.git
+            #{remote}
           EOS
         end
       end
