@@ -7,6 +7,7 @@ class BottleHookTests < Homebrew::TestCase
     def bottle; end
     def local_bottle_path; end
     def bottle_disabled?; false end
+    def name; "tests"; end
 
     def some_random_method
       true
