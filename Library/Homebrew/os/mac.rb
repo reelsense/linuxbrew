@@ -30,6 +30,11 @@ module OS
       version >= "10.12"
     end
 
+    def outdated_release?
+      # TODO: bump version when new OS is released
+      version < "10.9"
+    end
+
     def cat
       version.to_sym
     end
@@ -173,7 +178,7 @@ module OS
         path = HOMEBREW_PREFIX.join("opt", "gcc", "bin", cc)
         path = locate(cc) unless path.exist?
         path = locate(cc.delete("-.")) if OS.linux? && !path
-        version = `#{path} --version`[/gcc(?:-\d(?:\.\d)? \(.+\))? (\d\.\d\.\d)/, 1] if path
+        version = `#{path} --version`[/gcc(?:-\d(?:\.\d)?)? \(.+\) (\d\.\d\.\d)/, 1] if path
         @non_apple_gcc_version[cc] = version
       end
     end
