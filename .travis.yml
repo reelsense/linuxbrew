@@ -1,17 +1,21 @@
 language: ruby
+
+rvm:
+  - 1.8.7
+
 before_install:
- # Fix brew tests: `require': cannot load such file -- mkmf (LoadError)
- - sudo apt-get install ruby-dev
+  # Fix error: Incorrect file permissions (664)
+  - chmod 644 Library/Formula/*.rb
+  - if [ -f ".git/shallow" ]; then
+      travis_retry git fetch --unshallow;
+    fi
+
 install:
- - unset DYLD_LIBRARY_PATH
- # Warning: You have a non-Homebrew 'pkg-config' in your PATH
- - sudo rm -f /usr/bin/pkg-config
- # Warning: "config" scripts exist outside your system or Homebrew directories.
- - sudo rm -f /usr/local/clang-3.4/bin/llvm-config
- # Incorrect file permissions: chmod 644
- - chmod 644 Library/Formula/*.rb
- - PATH=$PWD/bin:$PATH
+  - PATH=$PWD/bin:$PATH
+  - export HOMEBREW_DEVELOPER="1"
+
 script:
- - brew test-bot --dry-run $TRAVIS_COMMIT |sed -n 's/^==> //p' |sh -ex
+  - brew test-bot
+
 notifications:
-    email: false
+  email: false
