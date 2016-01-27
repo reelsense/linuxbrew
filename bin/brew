@@ -122,7 +122,7 @@ fi
 
 # Many Pathname operations use getwd when they shouldn't, and then throw
 # odd exceptions. Reduce our support burden by showing a user-friendly error.
-if ! [[ -d "$(pwd)" ]]
+if [[ ! -d "$(pwd)" ]]
 then
   odie "The current working directory doesn't exist, cannot proceed."
 fi
@@ -137,7 +137,7 @@ fi
 HOMEBREW_COMMAND="$1"
 HOMEBREW_BASH_COMMAND="$HOMEBREW_LIBRARY/Homebrew/cmd/$1.sh"
 
-if [[ "$(id -u)" = "0" && "$(stat -f%u "$HOMEBREW_BREW_FILE")" != "0" ]]
+if [[ "$(id -u)" = "0" && "$(ls -nd "$HOMEBREW_BREW_FILE" | awk '{print $3}')" != "0" ]]
 then
   case "$HOMEBREW_COMMAND" in
     instal|install|reinstall|postinstall|ln|link|pin|update|update-bash|upgrade|create|migrate|tap|switch)
