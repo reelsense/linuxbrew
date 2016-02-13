@@ -17,19 +17,37 @@ class Patchelf < Formula
     depends_on "automake" => :build
   end
 
+  def pour_bottle?
+    # Prevent installing the patchelf bottle on systems with an old glibc.
+    require "requirements/glibc_requirement"
+    GlibcRequirement.new.satisfied?
+  end
+
   option "with-static", "Link statically"
   option "without-static-libstdc++", "Link libstdc++ dynamically"
 
   def install
     # Fix ./configure: line 4: .: filename argument required
-    inreplace "configure.ac", "m4_esyscmd([echo -n $(cat ./version)])", version
+    inreplace "configure.ac", "m4_esyscmd([echo -n $(cat ./version)])", version unless build.head?
 
     system "./bootstrap.sh" if build.head?
     system "./configure", "--prefix=#{prefix}",
-      ("CXXFLAGS=-static" if build.with? "static"),
-      ("CXXFLAGS=-static-libgcc -static-libstdc++" if build.with? "static-libstdc++"),
+      if build.with?("static") then "CXXFLAGS=-static"
+      elsif build.with?("static-libstdc++") then "CXXFLAGS=-static-libgcc -static-libstdc++"
+      end,
       "--disable-debug", "--disable-dependency-tracking", "--disable-silent-rules"
     system "make", "install"
+  end
+
+  def post_install
+    # Fix up binutils after glibc and patchelf are installed.
+    binutils = Formula["binutils"]
+    if binutils.installed? && Formula["glibc"].installed?
+      ohai "Fixing up #{binutils.full_name}..."
+      keg = Keg.new binutils.prefix
+      keg.relocate_install_names Keg::PREFIX_PLACEHOLDER, HOMEBREW_PREFIX,
+        Keg::CELLAR_PLACEHOLDER, HOMEBREW_CELLAR
+    end
   end
 
   test do

@@ -13,6 +13,7 @@ require "hooks/bottles"
 require "debrew"
 require "sandbox"
 require "requirements/cctools_requirement"
+require "requirements/glibc_requirement"
 
 class FormulaInstaller
   include FormulaCellarChecks
@@ -72,20 +73,6 @@ class FormulaInstaller
     !!@build_bottle && !formula.bottle_disabled?
   end
 
-  # Installing bottles on Linux requires glibc and patchelf.
-  def bottle_requirements_satisfied?(f)
-    return true unless OS.linux?
-    return true if f.name == "linux-headers"
-    return true if f.name == "patchelf" && Formula["glibc"].installed?
-    begin
-      return false unless Formula["glibc"].installed? && Formula["patchelf"].installed?
-    rescue FormulaUnavailableError
-      # Fix for brew tests, which uses NullLoader.
-      true
-    end
-    true
-  end
-
   def pour_bottle?(install_bottle_options = { :warn=>false })
     return true if Homebrew::Hooks::Bottles.formula_has_bottle?(formula)
 
@@ -107,7 +94,6 @@ class FormulaInstaller
       return false
     end
 
-    return false unless bottle_requirements_satisfied?(formula)
     true
   end
 
@@ -115,7 +101,6 @@ class FormulaInstaller
     return pour_bottle? if dep == formula
     return false if build_from_source?
     return false unless dep.bottle && dep.pour_bottle?
-    return false unless bottle_requirements_satisfied?(dep)
     return false unless build.used_options.empty?
     return false unless dep.bottle.compatible_cellar?
     true
@@ -338,8 +323,36 @@ class FormulaInstaller
     [unsatisfied_reqs, deps]
   end
 
+  def bottle_dependencies(inherited_options)
+    return [] unless OS.linux?
+    deps = []
+
+    # Installing bottles on Linux require a recent version of glibc.
+    glibc = GlibcRequirement.new
+    unless glibc.satisfied?
+      glibc_dep = glibc.to_dependency
+      begin
+        glibc_f = glibc_dep.to_formula
+      rescue FormulaUnavailableError
+        # Fix for brew tests, which uses NullLoader.
+        return []
+      end
+      deps += Dependency.expand(glibc_f) << glibc_dep
+    end
+
+    # patchelf is used to set the RPATH and dynamic linker of
+    # executables and shared libraries on Linux.
+    deps << Dependency.new("patchelf")
+
+    deps.select do |dep|
+      options = inherited_options[dep.name] = inherited_options_for(dep)
+      !dep.satisfied?(options)
+    end
+  end
+
   def expand_dependencies(deps)
     inherited_options = {}
+    poured_bottle = pour_bottle?
 
     expanded_deps = Dependency.expand(formula, deps) do |dependent, dep|
       options = inherited_options[dep.name] = inherited_options_for(dep)
@@ -347,6 +360,7 @@ class FormulaInstaller
         dependent,
         inherited_options.fetch(dependent.name, [])
       )
+      poured_bottle = true if install_bottle_for?(dependent, build)
 
       if (dep.optional? || dep.recommended?) && build.without?(dep)
         Dependency.prune
@@ -357,6 +371,7 @@ class FormulaInstaller
       end
     end
 
+    expanded_deps.unshift(*bottle_dependencies(inherited_options)) if poured_bottle
     expanded_deps.map { |dep| [dep, inherited_options[dep.name]] }
   end
 

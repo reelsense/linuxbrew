@@ -47,7 +47,8 @@ class Gcc < Formula
 
   depends_on "zlib" unless OS.mac?
   depends_on "binutils" if build.with? "glibc"
-  depends_on "glibc" => :optional
+  depends_on "glibc" => Formula["glibc"].installed? || !GlibcRequirement.new.satisfied? ?
+    :recommended : :optional
   depends_on "gmp"
   depends_on "libmpc"
   depends_on "mpfr"
@@ -105,6 +106,10 @@ class Gcc < Formula
     args = []
     args << "--build=#{arch}-apple-darwin#{osmajor}" if OS.mac?
     if build.with? "glibc"
+      # Fix for GCC 4.4 and older that do not support -static-libstdc++
+      # gengenrtl: error while loading shared libraries: libstdc++.so.6
+      lib.mkdir
+      ln_s ["/usr/lib64/libstdc++.so.6", "/lib64/libgcc_s.so.1"], lib
       binutils = Formula["binutils"].prefix/"x86_64-unknown-linux-gnu/bin"
       args += [
         "--with-native-system-header-dir=#{HOMEBREW_PREFIX}/include",
@@ -215,7 +220,7 @@ class Gcc < Formula
     # Move lib64/* to lib/ on Linuxbrew
     lib64 = Pathname.new "#{lib}64"
     if lib64.directory?
-      system "mv #{lib64}/* #{lib}/"
+      mv Dir["#{lib64}/*"], lib
       rmdir lib64
       prefix.install_symlink "lib" => "lib64"
     end
