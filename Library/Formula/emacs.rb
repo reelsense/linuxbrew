@@ -13,8 +13,8 @@ class Emacs < Formula
   end
 
   devel do
-    url "ftp://alpha.gnu.org/gnu/emacs/pretest/emacs-25.0.90.tar.xz"
-    sha256 "325f275b64eee106ad9aaadb42243619822e5e59bee35645f15e015176adb626"
+    url "http://alpha.gnu.org/gnu/emacs/pretest/emacs-25.0.91.tar.xz"
+    sha256 "d77ebd310dd8c978e15f29af33186646989534ae483aa8acafe6963244930193"
     depends_on "autoconf" => :build
     depends_on "automake" => :build
   end
@@ -41,6 +41,7 @@ class Emacs < Formula
   depends_on "imagemagick" => :optional
   depends_on "mailutils" => :optional
   depends_on "glib" => :optional
+  depends_on "homebrew/dupes/ncurses" unless OS.mac?
 
   # https://github.com/Homebrew/homebrew/issues/37803
   if build.with? "x11"

@@ -14,10 +14,10 @@ class Wine < Formula
   end
 
   bottle do
-    revision 1
-    sha256 "53e26919518160d16b0a8df3772a67afc0ca67cfc925add2bc64f91c4a6cdac7" => :el_capitan
-    sha256 "19bf33a8d93a20d55ea7906eb523f232beeb52dda7212bcc16c07db95c6eae98" => :yosemite
-    sha256 "7a674fb6ce534c1ace457eec2040e9430ca4e831aaa0f18824972aa94a1355cf" => :mavericks
+    revision 2
+    sha256 "33b161d56526335f422f15442da31ab25196556538031ad3fd5825102bb1b484" => :el_capitan
+    sha256 "c62a3dd6630de472510be71c50b4724c826dd8daaad9c71bfdb737daa6ccf338" => :yosemite
+    sha256 "8bfc2b0d412c8edffde2054f7a42f86545b5466843fabd9e0fcf765f5e428d85" => :mavericks
   end
 
   devel do
@@ -29,7 +29,7 @@ class Wine < Formula
   # note that all wine dependencies should declare a --universal option in their formula,
   # otherwise homebrew will not notice that they are not built universal
   def require_universal_deps?
-    MacOS.prefer_64_bit?
+    OS.mac? && MacOS.prefer_64_bit?
   end
 
   # Wine will build both the Mac and the X11 driver by default, and you can switch
@@ -59,6 +59,13 @@ class Wine < Formula
   patch do
     url "https://bugs.winehq.org/attachment.cgi?id=52384"
     sha256 "30766403f5064a115f61de8cacba1defddffe2dd898b59557956400470adc699"
+  end
+
+  # Patch to fix MSI creation issues.
+  # https://bugs.winehq.org/show_bug.cgi?id=40129
+  patch do
+    url "https://bugs.winehq.org/attachment.cgi?id=53632"
+    sha256 "b9f98711cfe62228f5d84ab394394008ee10127bebcea7ef966d24127b466e0a"
   end
 
   # This option is currently disabled because Apple clang currently doesn't
@@ -108,7 +115,7 @@ class Wine < Formula
   end
 
   def install
-    ENV.m32 # Build 32-bit; Wine doesn't support 64-bit host builds on OS X.
+    ENV.m32 if OS.mac? # Build 32-bit; Wine doesn't support 64-bit host builds on OS X.
 
     # Help configure find libxml2 in an XCode only (no CLT) installation.
     ENV.libxml2
