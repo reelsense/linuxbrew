@@ -129,8 +129,6 @@ class Gcc < Formula
       "--with-mpfr=#{Formula["mpfr"].opt_prefix}",
       "--with-mpc=#{Formula["libmpc"].opt_prefix}",
       "--with-isl=#{Formula["isl"].opt_prefix}",
-    ]
-    args += [
       "--with-system-zlib",
       "--enable-libstdcxx-time=yes",
       "--enable-stage1-checking",
@@ -220,7 +218,7 @@ class Gcc < Formula
     # Move lib64/* to lib/ on Linuxbrew
     lib64 = Pathname.new "#{lib}64"
     if lib64.directory?
-      mv Dir["#{lib64}/*"], lib
+      system "mv #{lib64}/* #{lib}/" # Do not use FileUtils.mv with Ruby 1.9.3
       rmdir lib64
       prefix.install_symlink "lib" => "lib64"
     end
