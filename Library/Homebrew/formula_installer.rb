@@ -79,17 +79,29 @@ class FormulaInstaller
     return false if @pour_failed
 
     bottle = formula.bottle
-    return true  if force_bottle? && bottle
+    return false unless bottle
+    return true  if force_bottle?
     return false if build_from_source? || build_bottle? || interactive?
     return false if ARGV.cc
     return false unless options.empty?
     return false if formula.bottle_disabled?
     return true  if formula.local_bottle_path
-    return false unless bottle && formula.pour_bottle?
+    unless formula.pour_bottle?
+      if install_bottle_options[:warn] && formula.pour_bottle_check_unsatisfied_reason
+        opoo <<-EOS.undent
+          Building #{formula.full_name} from source:
+            #{formula.pour_bottle_check_unsatisfied_reason}
+        EOS
+      end
+      return false
+    end
 
     unless bottle.compatible_cellar?
       if install_bottle_options[:warn]
-        opoo "Building source; cellar of #{formula.full_name}'s bottle is #{bottle.cellar}"
+        opoo <<-EOS.undent
+          Building #{formula.full_name} from source:
+            The bottle needs a #{bottle.cellar} Cellar (yours is #{HOMEBREW_CELLAR}).
+        EOS
       end
       return false
     end
@@ -349,7 +361,9 @@ class FormulaInstaller
       options = inherited_options[dep.name] = inherited_options_for(dep)
       !dep.satisfied?(options)
     end
-    Dependency.merge_repeats(deps)
+    deps = Dependency.merge_repeats(deps)
+    i = deps.find_index { |x| x.to_formula == formula } || deps.length
+    deps[0, i]
   end
 
   def expand_dependencies(deps)
@@ -373,7 +387,8 @@ class FormulaInstaller
       end
     end
 
-    expanded_deps.unshift(*bottle_dependencies(inherited_options)) if poured_bottle
+    expanded_deps = Dependency.merge_repeats(
+      bottle_dependencies(inherited_options) + expanded_deps) if poured_bottle
     expanded_deps.map { |dep| [dep, inherited_options[dep.name]] }
   end
 

@@ -28,9 +28,11 @@ class Gcc < Formula
   head "svn://gcc.gnu.org/svn/gcc/trunk"
 
   bottle do
+    cellar :any if OS.linux?
     sha256 "90ad519442f0336b0beee3cf2be305ea495fb2e2ad82c2a96c5b0c3bcef8f268" => :el_capitan
     sha256 "334bd7afbec85740ec7c49eedf52858209c31ed1f284ad10ccab7c50a41bcd35" => :yosemite
     sha256 "679c9bfc2082f8ab4320c89082b08c4eab9523dd72bfed27fe4b712de7013a1f" => :mavericks
+    sha256 "2c6ae8e098830e19f87d8426b49d353b6cbc0b89d9259bae242d57b6694c9039" => :x86_64_linux
   end
 
   option "with-java", "Build the gcj compiler"
@@ -69,8 +71,9 @@ class Gcc < Formula
 
   # The bottles are built on systems with the CLT installed, and do not work
   # out of the box on Xcode-only systems due to an incorrect sysroot.
-  def pour_bottle?
-    MacOS::CLT.installed?
+  pour_bottle? do
+    reason "The bottle needs the Xcode CLT to be installed."
+    satisfy { MacOS::CLT.installed? }
   end
 
   def version_suffix
@@ -113,6 +116,7 @@ class Gcc < Formula
       binutils = Formula["binutils"].prefix/"x86_64-unknown-linux-gnu/bin"
       args += [
         "--with-native-system-header-dir=#{HOMEBREW_PREFIX}/include",
+        "--with-local-prefix=#{HOMEBREW_PREFIX}/local",
         "--with-build-time-tools=#{binutils}",
         "--with-boot-ldflags=-static-libstdc++ -static-libgcc #{ENV["LDFLAGS"]}",
       ]
@@ -250,25 +254,25 @@ class Gcc < Formula
       rm_f [specs_orig, specs]
 
       # Save a backup of the default specs file
-      s = `#{bin}/#{gcc} -dumpspecs`
+      specs_string = `#{bin}/#{gcc} -dumpspecs`
       raise "command failed: #{gcc} -dumpspecs" if $?.exitstatus != 0
-      specs_orig.write s
+      specs_orig.write specs_string
 
       # Set the library search path
-      if build.with?("glibc")
-        s += "*link_libgcc:\n-nostdlib -L#{lib}/gcc/x86_64-unknown-linux-gnu/#{version} -L#{HOMEBREW_PREFIX}/lib\n\n"
-      else
-        s += "*link_libgcc:\n+ -L#{HOMEBREW_PREFIX}/lib\n\n"
-      end
-      s += "*link:\n+ -rpath #{HOMEBREW_PREFIX}/lib"
-
-      # Set the dynamic linker
       glibc = Formula["glibc"]
-      if glibc.installed?
-        s += " --dynamic-linker #{glibc.opt_lib}/ld-linux-x86-64.so.2"
-      end
-      s += "\n\n"
-      specs.write s
+      libgcc = lib/"gcc/x86_64-unknown-linux-gnu"/version
+      ld_so = glibc.opt_lib/"ld-linux-x86-64.so.2"
+      specs.write specs_string + <<-EOS.undent
+        *cpp_unique_options:
+        + -isystem #{HOMEBREW_PREFIX}/include
+
+        *link_libgcc:
+        #{glibc.installed? ? "-nostdlib -L#{libgcc}" : "+"} -L#{HOMEBREW_PREFIX}/lib
+
+        *link:
+        + -rpath #{HOMEBREW_PREFIX}/lib#{" --dynamic-linker #{ld_so}" if glibc.installed?}
+
+      EOS
     end
   end
 
