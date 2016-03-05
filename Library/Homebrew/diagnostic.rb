@@ -899,10 +899,11 @@ module Homebrew
       end
 
       def check_DYLD_vars
-        found = ENV.keys.grep(/^DYLD_/)
+        dyld = OS.mac? ? "DYLD" : "LD"
+        found = ENV.keys.grep(/^#{dyld}_/)
         return if found.empty?
         s = inject_file_list found.map { |e| "#{e}: #{ENV.fetch(e)}" }, <<-EOS.undent
-          Setting DYLD_* vars can break dynamic linking.
+          Setting #{dyld}_* vars can break dynamic linking.
           Set variables:
         EOS
         if found.include? "DYLD_INSERT_LIBRARIES"
@@ -1014,7 +1015,7 @@ module Homebrew
       def check_git_newline_settings
         return unless Utils.git_available?
 
-        autocrlf = `git config --get core.autocrlf`.chomp
+        autocrlf = HOMEBREW_REPOSITORY.cd { `git config --get core.autocrlf`.chomp }
 
         if autocrlf == "true" then <<-EOS.undent
         Suspicious Git newline settings found.
@@ -1241,6 +1242,7 @@ module Homebrew
       end
 
       def check_for_non_prefixed_findutils
+        return unless OS.mac?
         findutils = Formula["findutils"]
         return unless findutils.any_version_installed?
 

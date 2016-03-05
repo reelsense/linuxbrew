@@ -111,14 +111,13 @@ class Gcc < Formula
     if build.with? "glibc"
       # Fix for GCC 4.4 and older that do not support -static-libstdc++
       # gengenrtl: error while loading shared libraries: libstdc++.so.6
-      lib.mkdir
+      mkdir_p lib
       ln_s ["/usr/lib64/libstdc++.so.6", "/lib64/libgcc_s.so.1"], lib
       binutils = Formula["binutils"].prefix/"x86_64-unknown-linux-gnu/bin"
       args += [
         "--with-native-system-header-dir=#{HOMEBREW_PREFIX}/include",
         "--with-local-prefix=#{HOMEBREW_PREFIX}/local",
         "--with-build-time-tools=#{binutils}",
-        "--with-boot-ldflags=-static-libstdc++ -static-libgcc #{ENV["LDFLAGS"]}",
       ]
       # Set the search path for glibc libraries and objects.
       ENV["LIBRARY_PATH"] = Formula["glibc"].lib
@@ -145,6 +144,9 @@ class Gcc < Formula
       "--with-pkgversion=Homebrew #{name} #{pkg_version} #{build.used_options*" "}".strip,
       "--with-bugurl=https://github.com/Homebrew/homebrew/issues",
     ]
+
+    # Fix cc1: error while loading shared libraries: libisl.so.15
+    args << "--with-boot-ldflags=-static-libstdc++ -static-libgcc #{ENV["LDFLAGS"]}" if OS.linux?
 
     # "Building GCC with plugin support requires a host that supports
     # -fPIC, -shared, -ldl and -rdynamic."

@@ -77,6 +77,8 @@ class Keg
 
   def change_rpath(file, new_prefix)
     return unless OS.linux?
+    # Patching patchelf using itself fails with "Text file busy" or SIGBUS.
+    return if name == "patchelf"
     begin
       patchelf = Formula["patchelf"]
     rescue FormulaUnavailableError
@@ -87,11 +89,10 @@ class Keg
     glibc = Formula["glibc"]
     cmd = "#{patchelf.bin}/patchelf --set-rpath #{new_prefix}/lib"
     if file.mach_o_executable?
-      interpreter = HOMEBREW_PREFIX/"lib/ld.so"
+      interpreter = new_prefix == PREFIX_PLACEHOLDER ?
+        "/lib64/ld-linux-x86-64.so.2" :
+        HOMEBREW_PREFIX/"lib/ld.so"
       cmd << " --set-interpreter #{interpreter}"
-
-      # Patch patchelf using patchelf, even when its interpreter is invalid.
-      cmd = "#{interpreter} #{cmd}" if name == "patchelf"
     end
     cmd << " #{file}"
     puts "Setting RPATH of #{file}" if ARGV.debug?

@@ -77,6 +77,7 @@ class Tap
     @alias_reverse_table = nil
     @command_files = nil
     @formula_renames = nil
+    @tap_migrations = nil
   end
 
   # The remote path to this {Tap}.
@@ -140,17 +141,21 @@ class Tap
   # @param [Hash] options
   # @option options [String]  :clone_targe If passed, it will be used as the clone remote.
   # @option options [Boolean] :full_clone If set as true, full clone will be used.
+  # @option options [Boolean] :quiet If set, suppress all output.
   def install(options = {})
     require "descriptions"
     raise TapAlreadyTappedError, name if installed?
     clear_cache
 
+    quiet = options.fetch(:quiet, false)
+
     # ensure git is installed
     Utils.ensure_git_installed!
-    ohai "Tapping #{name}"
+    ohai "Tapping #{name}" unless quiet
     remote = options[:clone_target] || "https://github.com/#{user}/homebrew-#{repo}"
     args = %W[clone #{remote} #{path}]
     args << "--depth=1" unless options.fetch(:full_clone, false)
+    args << "-q" if quiet
 
     begin
       safe_system "git", *args
@@ -165,10 +170,10 @@ class Tap
     link_manpages
 
     formula_count = formula_files.size
-    puts "Tapped #{formula_count} formula#{plural(formula_count, "e")} (#{path.abv})"
+    puts "Tapped #{formula_count} formula#{plural(formula_count, "e")} (#{path.abv})" unless quiet
     Descriptions.cache_formulae(formula_names)
 
-    if !options[:clone_target] && private?
+    if !options[:clone_target] && private? && !quiet
       puts <<-EOS.undent
         It looks like you tapped a private repository. To avoid entering your
         credentials each time you update, you can use git HTTP credential
@@ -366,6 +371,17 @@ class Tap
 
     @formula_renames ||= if (rename_file = path/"formula_renames.json").file?
       Utils::JSON.load(rename_file.read)
+    else
+      {}
+    end
+  end
+
+  # Hash with tap migrations
+  def tap_migrations
+    require "utils/json"
+
+    @tap_migrations ||= if (migration_file = path/"tap_migrations.json").file?
+      Utils::JSON.load(migration_file.read)
     else
       {}
     end

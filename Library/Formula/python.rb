@@ -32,6 +32,7 @@ class Python < Formula
   depends_on "homebrew/dupes/tcl-tk" => :optional
   depends_on "berkeley-db4" => :optional
   depends_on :x11 if build.with?("tcl-tk") && Tab.for_name("homebrew/dupes/tcl-tk").with?("x11")
+  depends_on "bzip2" unless OS.mac?
 
   skip_clean "bin/pip", "bin/pip-2.7"
   skip_clean "bin/easy_install", "bin/easy_install-2.7"
@@ -128,10 +129,14 @@ class Python < Formula
         cflags << "-I#{MacOS.sdk_path}/System/Library/Frameworks/Tk.framework/Versions/8.5/Headers"
       end
     end
-    # Python's setup.py parses CPPFLAGS to learn search paths for the
-    # dependencies of the compiled extension modules.
-    # See Homebrew/linuxbrew#420 and Homebrew/linuxbrew#460
-    cppflags << "-I#{HOMEBREW_PREFIX}/include" if OS.linux?
+
+    # Python's setup.py parses CPPFLAGS and LDFLAGS to learn search
+    # paths for the dependencies of the compiled extension modules.
+    # See Homebrew/linuxbrew#420, Homebrew/linuxbrew#460, and Homebrew/linuxbrew#875
+    if OS.linux?
+      cppflags << "-I#{HOMEBREW_PREFIX}/include"
+      ldflags << "-L#{HOMEBREW_PREFIX}/lib"
+    end
 
     # Avoid linking to libgcc https://code.activestate.com/lists/python-dev/112195/
     args << "MACOSX_DEPLOYMENT_TARGET=#{MacOS.version}"
