@@ -4,8 +4,8 @@ class Texlive < Formula
   # tag "linuxbrew"
 
   url "http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz"
-  version "20160305"
-  sha256 "f4ad5f49c01173de651b3aa4c0a74eac0166e2f3d341de4f8775d31fe2c136bb"
+  version "20160306"
+  sha256 "794f5f7fc889fe6e55b70cfb826b1b2b07196ad13e679813801048b337d6343f"
 
   option "with-full", "install everything"
   option "with-medium", "install small + more packages and languages"
@@ -14,9 +14,9 @@ class Texlive < Formula
   option "with-minimal", "install plain only"
 
   def install
-    scheme = %w[full medium small basic minimal].find {
-      |x| build.with? x
-    } || "small"
+    scheme = %w[full medium small basic minimal].find do |x|
+      build.with? x
+    end || "small"
 
     ohai "Downloading and installing TeX Live. This will take a few minutes."
     ENV["TEXLIVE_INSTALL_PREFIX"] = prefix

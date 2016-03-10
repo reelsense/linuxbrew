@@ -1,7 +1,8 @@
 sut:
   build: .
-  command: brew test-bot
+  command: sh -c "env && brew test-bot"
   environment:
     - GIT_BRANCH
     - GIT_SHA1
     - GIT_TAG
+    - IMAGE_NAME
