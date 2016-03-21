@@ -1,15 +1,15 @@
 class Sbcl < Formula
   desc "Steel Bank Common Lisp system"
   homepage "http://www.sbcl.org/"
-  url "https://downloads.sourceforge.net/project/sbcl/sbcl/1.3.2/sbcl-1.3.2-source.tar.bz2"
-  sha256 "d382f196ea7795c3541bcda433e0bb8b5610a62bb9f83309fe20629e6090afa2"
+  url "https://downloads.sourceforge.net/project/sbcl/sbcl/1.3.3/sbcl-1.3.3-source.tar.bz2"
+  sha256 "db38f600f2db5511566cbb53c3e6ac70b2576a09d5210ac44f9a9b14fee7fb4f"
 
   head "git://sbcl.git.sourceforge.net/gitroot/sbcl/sbcl.git"
 
   bottle do
-    sha256 "6147a91e67a6c527ad45d08b46ff5efc70baac2256040369dc26d6bd4d18a8da" => :el_capitan
-    sha256 "3c2740845440aaa6890fb171373bd8496c7274262b173a14474190b71b4bd42c" => :yosemite
-    sha256 "5662ef00415a631508a60dae971103df1c21ffe22f25985bac98e81b0932efaf" => :mavericks
+    sha256 "264f71a54ead7391e5b502aa260e27720a2e6ea0b5e6bff64c5d39d3ee7a6f7e" => :el_capitan
+    sha256 "6becfaaa89a7d59b5510765e44e2cb41dff9345d251c654a04819fe5a62301ed" => :yosemite
+    sha256 "fb2b7cba8d90cc5541d591391255642c2f7cc65663d7abdd917049608342dbcf" => :mavericks
   end
 
   fails_with :llvm do
@@ -25,19 +25,29 @@ class Sbcl < Formula
 
   # Current binary versions are listed at http://sbcl.sourceforge.net/platform-table.html
   resource "bootstrap64" do
-    url "https://downloads.sourceforge.net/project/sbcl/sbcl/1.1.8/sbcl-1.1.8-x86-64-darwin-binary.tar.bz2"
-    sha256 "729054dc27d6b53bd734eac4dffeaa9e231e97bdbe4927d7a68c8f0210cad700"
+    if OS.mac?
+      url "https://downloads.sourceforge.net/project/sbcl/sbcl/1.1.8/sbcl-1.1.8-x86-64-darwin-binary.tar.bz2"
+      sha256 "729054dc27d6b53bd734eac4dffeaa9e231e97bdbe4927d7a68c8f0210cad700"
+    elsif OS.linux?
+      url "https://downloads.sourceforge.net/project/sbcl/sbcl/1.3.3/sbcl-1.3.3-x86-64-linux-binary.tar.bz2"
+      sha256 "e8b1730c42e4a702f9b4437d9842e91cb680b7246f88118c7443d7753e61da65"
+    end
   end
 
   resource "bootstrap32" do
-    url "https://downloads.sourceforge.net/project/sbcl/sbcl/1.1.6/sbcl-1.1.6-x86-darwin-binary.tar.bz2"
-    sha256 "5801c60e2a875d263fccde446308b613c0253a84a61ab63569be62eb086718b3"
+    if OS.mac?
+      url "https://downloads.sourceforge.net/project/sbcl/sbcl/1.1.6/sbcl-1.1.6-x86-darwin-binary.tar.bz2"
+      sha256 "5801c60e2a875d263fccde446308b613c0253a84a61ab63569be62eb086718b3"
+    elsif OS.linux?
+      url "https://downloads.sourceforge.net/project/sbcl/sbcl/1.2.7/sbcl-1.2.7-x86-linux-binary.tar.bz2"
+      sha256 "724425fe0d28747c7d31c6655e39fa8c27f9ef4608c482ecc60089bcc85fc31d"
+    end
   end
 
   patch :p0 do
     url "https://raw.githubusercontent.com/Homebrew/patches/c5ffdb11/sbcl/patch-base-target-features.diff"
     sha256 "e101d7dc015ea71c15a58a5c54777283c89070bf7801a13cd3b3a1969a6d8b75"
-  end
+  end if OS.mac?
 
   patch :p0 do
     url "https://raw.githubusercontent.com/Homebrew/patches/c5ffdb11/sbcl/patch-make-doc.diff"
