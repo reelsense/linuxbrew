@@ -8,14 +8,18 @@ class Ghc < Formula
     sha256 "72c6c729ea385aaebfa22b55fe31b85f46e423a510c83d2f76c8f57336f9bf2c" => :el_capitan
     sha256 "3914b0875845c0e419c440c1b5833631ea709e6e8d5d9bf546422852c4c96ea8" => :yosemite
     sha256 "3ca8542ed077871a9da2e7af1a2362eb6ddc52501e6625fa5b06e9fda288e980" => :mavericks
+    sha256 "81fe9bd3a6caec256a36c5447abc79bfb52a153073e19528bab56a39da43554b" => :x86_64_linux
   end
 
   option "with-test", "Verify the build using the testsuite"
   deprecated_option "tests" => "with-test"
   deprecated_option "with-tests" => "with-test"
 
-  depends_on "gmp" => :build if OS.linux?
   depends_on "homebrew/dupes/m4" => :build unless OS.mac?
+
+  # These two dependencies are needed for the bootstrap executables.
+  depends_on "gmp" => :build if OS.linux?
+  depends_on "homebrew/dupes/ncurses" => :build if OS.linux?
 
   resource "gmp" do
     url "http://ftpmirror.gnu.org/gmp/gmp-6.1.0.tar.bz2"
@@ -90,6 +94,10 @@ class Ghc < Formula
       ENV.prepend_path "LD_LIBRARY_PATH", gmp/"lib"
       # Fix /usr/bin/ld: cannot find -lgmp
       ENV.prepend_path "LIBRARY_PATH", gmp/"lib"
+      # Fix ghc-stage2: error while loading shared libraries: libncursesw.so.5
+      ln_s Formula["ncurses"].lib/"libncursesw.so", gmp/"lib/libncursesw.so.5"
+      # Fix ghc-pkg: error while loading shared libraries: libncursesw.so.6
+      ENV.prepend_path "LD_LIBRARY_PATH", Formula["ncurses"].lib
     end
 
     resource("binary").stage do
