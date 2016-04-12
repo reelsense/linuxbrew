@@ -6,7 +6,7 @@ It can be installed in your home directory and does not require root access. The
 
 Features, usage and installation instructions are [summarised on the homepage](http://linuxbrew.sh).
 
-To receive updates of major changes to Linuxbrew subscribe to the [Linuxbrew Updates](https://github.com/Linuxbrew/linuxbrew/issues/864) issue on GitHub.
+To receive updates of major changes to Linuxbrew subscribe to the [Linuxbrew Updates](https://github.com/Linuxbrew/linuxbrew/issues/1000) issue on GitHub.
 
 Install Linuxbrew (tl;dr)
 -------------------------
@@ -33,7 +33,7 @@ Dependencies
 * **Ruby** 1.8.6 or newer
 + **GCC** 4.4 or newer
 + **Linux** 2.6.16 or newer
-+ **64-bit x86** or **32-bit ARM** platform
++ **64-bit x86** or **32-bit ARM** (Raspberry Pi)
 
 Paste at a Terminal prompt:
 
